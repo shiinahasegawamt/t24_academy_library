@@ -70,7 +70,7 @@ public class RentalManageDto {
         }else if(preStatus == RentalStatus.RETURNED.getValue() && this.status== RentalStatus.CANCELED.getValue()){
             return "貸出ステータスは返却済みからキャンセルに選択できません";
         }
-        return "";
+        return null;
     }
 }
     
