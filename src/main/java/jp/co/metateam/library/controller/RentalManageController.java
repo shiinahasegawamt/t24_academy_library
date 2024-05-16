@@ -1,6 +1,7 @@
 package jp.co.metateam.library.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +18,7 @@ import jakarta.persistence.Id;
 
 import jp.co.metateam.library.model.Account;
 import jp.co.metateam.library.model.AccountDto;
+import jp.co.metateam.library.model.BookMst;
 import jp.co.metateam.library.model.BookMstDto;
 import jp.co.metateam.library.service.AccountService;
 import jp.co.metateam.library.values.AuthorizationTypes;
@@ -29,7 +31,12 @@ import jp.co.metateam.library.model.StockDto;
 import jp.co.metateam.library.service.StockService;
 
 import lombok.extern.log4j.Log4j2;
+
+import java.sql.Date;
+import java.util.ArrayList;
 import java.util.List;
+
+import javax.xml.crypto.Data;
 
 /**
  * 貸出管理関連クラスß
@@ -90,6 +97,14 @@ public class RentalManageController {
     @PostMapping("/rental/add")
     public String save(@Valid @ModelAttribute RentalManageDto rentalManageDto, BindingResult result, RedirectAttributes ra) {
         try {
+            String rentaladdDataError = this.rentaladdCheck(rentalManageDto,rentalManageDto.getStockId());
+            
+            if(rentaladdDataError != null){
+                result.addError(new FieldError("rentalManageDto","expectedRentalOn",rentaladdDataError));
+               }
+            if(rentaladdDataError != null){
+                result.addError(new FieldError("rentalManageDto","expectedReturnOn",rentaladdDataError));
+               }
             if (result.hasErrors()) {
                 throw new Exception("Validation error.");
             }
@@ -103,7 +118,7 @@ public class RentalManageController {
             ra.addFlashAttribute("rentalManageDto", rentalManageDto);
             ra.addFlashAttribute("org.springframework.validation.BindingResult.rentalManageDto", result);
 
-            return "redirect:/rental/add";
+            return "rental/add";
         }
     }
 
@@ -145,11 +160,17 @@ public class RentalManageController {
                
             RentalManage rentalManage = this.rentalManageService.findById(Long.valueOf(id));
             String validerror = rentalManageDto.isvalidStatus(rentalManage.getStatus());
+            String rentalDataError = this.rentalCheck(rentalManageDto, rentalManage.getStock().getId(),Long.valueOf(id));
 
                if(validerror != null){
                 result.addError(new FieldError("rentalManageDto","status",validerror));
                }
-
+               if(rentalDataError != null){
+                result.addError(new FieldError("rentalManageDto","expectedRentalOn",rentalDataError));
+               }
+               if(rentalDataError != null){
+                result.addError(new FieldError("rentalManageDto","expectedReturnOn",rentalDataError));
+               }
                if (result.hasErrors()) {
                    throw new Exception("Validation error.");
                }
@@ -176,7 +197,47 @@ public class RentalManageController {
            }
        }
 
+    @Query
+       public String rentalCheck (RentalManageDto rentalManageDto,String Id,Long rentalId){
+
+        List<RentalManage> rentalAvailable = this.rentalManageService.findByStockIdAndStatusIn(Id,Long.valueOf(rentalId));
+        
+        if(rentalAvailable != null){
+        
+        
+        for (RentalManage list : rentalAvailable){
+         if(list.getExpectedReturnOn().after(rentalManageDto.getExpectedRentalOn()) && list.getExpectedRentalOn().before(rentalManageDto.getExpectedReturnOn())){
+            return "この書籍は、入力された日付で登録できません";
+         }
+        }
     }
+         return null;
+    }
+
+    @Query
+       public String rentaladdCheck (RentalManageDto rentalManageDto,String Id){
+            
+            List<RentalManage> rentaladdAvailable = this.rentalManageService.findByStockIdAndStatusIn(Id);
+
+        if(rentaladdAvailable != null){
+        
+        
+        for (RentalManage list : rentaladdAvailable){
+         if(list.getExpectedReturnOn().after(rentalManageDto.getExpectedRentalOn()) && list.getExpectedRentalOn().before(rentalManageDto.getExpectedReturnOn())){
+            return "この書籍は、入力された日付で登録できません";
+                 }
+                }
+            }
+            return null; 
+               
+            
+      
+       
+       
+        }
+    }
+
+
 
         
     

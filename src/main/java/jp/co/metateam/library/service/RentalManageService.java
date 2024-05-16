@@ -112,6 +112,16 @@ public class RentalManageService {
 
         return rentalManage;
     }
+
+    public List<RentalManage> findByStockIdAndStatusIn(String Id,Long rentalId){
+        List<RentalManage> rentalAvailable = this.rentalManageRepository.findByStockIdAndStatusIn(Id,Long.valueOf(rentalId));
+        return rentalAvailable;
+    }
+
+    public List<RentalManage> findByStockIdAndStatusIn(String Id){
+        List<RentalManage> rentaladdAvailable = this.rentalManageRepository.findByStockIdAndStatusIn(Id);
+        return rentaladdAvailable;
+    }
 }
 
 
